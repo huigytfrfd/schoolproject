@@ -3,27 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhySpend | Behavioral AI & Budgeting</title>
+    <title>WhySpend | Personal Finance & Goals</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
         
         :root {
-            --cool-income: #10b981;
-            --warm-expense: #f97316;
-            --danger-red: #ef4444;
-            --primary-blue: #2563eb;
-            --sidebar-width: 280px;
+            --income-green: #22c55e;
+            --expense-red: #ef4444;
+            --primary-blue: #3b82f6;
+            --sidebar-bg: #ffffff;
+            --main-bg: #f3f4f6;
         }
 
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background: #f8fafc;
+            background: var(--main-bg);
             color: #1e293b;
             margin: 0;
             height: 100vh;
@@ -31,618 +30,499 @@
             overflow: hidden;
         }
 
-        /* Responsive Sidebar */
         aside {
-            width: var(--sidebar-width);
-            background: white;
-            border-right: 1px solid #e2e8f0;
+            width: 260px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid #e5e7eb;
             height: 100vh;
             display: flex;
             flex-direction: column;
-            padding: 1.5rem;
+            padding: 2rem 1.25rem;
             flex-shrink: 0;
-            z-index: 100;
+            z-index: 50;
         }
 
         .nav-item {
             display: flex;
             align-items: center;
-            gap: 1rem;
-            padding: 0.875rem 1.25rem;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
             border-radius: 12px;
             color: #64748b;
             font-weight: 600;
             transition: all 0.2s ease;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.5rem;
             cursor: pointer;
-            font-size: 0.95rem;
         }
 
-        .nav-item:hover { background: #f1f5f9; color: #1e293b; }
-        .nav-item.active { background: #1e293b; color: white; }
+        .nav-item:hover { background: #f8fafc; color: var(--primary-blue); }
+        .nav-item.active { background: #eff6ff; color: var(--primary-blue); border: 1px solid #dbeafe; }
 
         main {
             flex-grow: 1;
             height: 100vh;
             overflow-y: auto;
-            padding: 2rem;
-            background: #f8fafc;
+            padding: 2.5rem;
         }
 
         .glass-card {
             background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 20px;
-            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+            border: 1px solid #e5e7eb;
+            border-radius: 24px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
         }
 
         .page { display: none; }
         .page.active { display: block; }
 
-        /* Chart Scaling Fix */
-        .chart-container {
+        .chart-wrapper {
             position: relative;
-            height: 280px; /* Fixed height to prevent oversize on large screens */
             width: 100%;
+            max-width: 320px;
+            aspect-ratio: 1 / 1;
             margin: 0 auto;
         }
 
         .chat-bubble {
             max-width: 85%;
-            padding: 0.875rem 1.25rem;
-            border-radius: 16px;
-            margin-bottom: 0.75rem;
-            font-size: 0.9rem;
+            padding: 1rem 1.25rem;
+            border-radius: 18px;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
             line-height: 1.5;
         }
-        .chat-ai { background: #f1f5f9; color: #1e293b; border-bottom-left-radius: 2px; }
-        .chat-user { background: var(--primary-blue); color: white; border-bottom-right-radius: 2px; align-self: flex-end; }
+        .chat-ai { background: white; color: #334155; border: 1px solid #e2e8f0; border-bottom-left-radius: 4px; }
+        .chat-user { background: var(--primary-blue); color: white; border-bottom-right-radius: 4px; align-self: flex-end; }
 
-        .negative-val { color: var(--danger-red) !important; }
-        .positive-val { color: var(--cool-income) !important; }
-
-        .chart-toggle-btn {
-            padding: 0.4rem 0.8rem;
-            border-radius: 8px;
-            font-size: 0.7rem;
+        .btn-primary {
+            background: var(--primary-blue);
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 12px;
             font-weight: 700;
             transition: all 0.2s;
-            background: #f1f5f9;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.025em;
-        }
-        .chart-toggle-btn.active {
-            background: #2563eb;
-            color: white;
         }
 
-        .custom-scroll::-webkit-scrollbar { width: 5px; }
-        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
-        /* Animations */
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
     </style>
 </head>
 <body>
 
-    <!-- SIDEBAR -->
     <aside>
-        <div class="mb-8 flex items-center gap-3 px-2">
-            <div class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+        <div class="mb-10 px-2 flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-100">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             </div>
-            <h1 class="text-xl font-bold tracking-tight text-slate-900">WhySpend</h1>
+            <h1 class="text-xl font-bold text-slate-800 tracking-tight">WhySpend</h1>
         </div>
 
         <nav class="flex-grow">
-            <div onclick="switchPage('dashboard')" class="nav-item active" id="nav-dashboard">
-                <span>Dashboard</span>
-            </div>
-            <div onclick="switchPage('income')" class="nav-item" id="nav-income">
-                <span>Income</span>
-            </div>
-            <div onclick="switchPage('subs')" class="nav-item" id="nav-subs">
-                <span>Subscriptions</span>
-            </div>
-            <div onclick="switchPage('goals')" class="nav-item" id="nav-goals">
-                <span>Goals</span>
-            </div>
-            <div onclick="switchPage('ai')" class="nav-item" id="nav-ai">
-                <span>Why AI?</span>
-            </div>
+            <div onclick="switchPage('dashboard')" class="nav-item active" id="nav-dashboard"><span>Home</span></div>
+            <div onclick="switchPage('income')" class="nav-item" id="nav-income"><span>Income</span></div>
+            <div onclick="switchPage('subs')" class="nav-item" id="nav-subs"><span>Subscriptions</span></div>
+            <div onclick="switchPage('goals')" class="nav-item" id="nav-goals"><span>Savings Goals</span></div>
+            <div onclick="switchPage('ai')" class="nav-item" id="nav-ai"><span>Smart Advice</span></div>
         </nav>
 
-        <!-- Dynamic Sidebar Goal Widget -->
-        <div id="mini-goal-card" class="mt-auto p-4 bg-slate-50 rounded-xl border border-slate-100 cursor-pointer hover:bg-slate-100 transition-colors" onclick="switchPage('goals')">
-            <div class="flex items-center justify-between mb-2">
-                <p class="text-[9px] font-bold text-blue-600 uppercase tracking-widest">Active Goal</p>
-                <span class="text-[9px] font-bold text-slate-400">RANK #1</span>
-            </div>
-            <p class="text-sm font-bold text-slate-800 truncate" id="mini-goal-name">No Goal Set</p>
-            <div class="w-full bg-slate-200 h-1.5 rounded-full mt-2.5 overflow-hidden">
-                <div id="mini-goal-progress" class="bg-blue-600 h-full rounded-full transition-all duration-700" style="width: 0%"></div>
+        <div id="mini-goal-card" class="mt-auto p-4 bg-blue-50 rounded-2xl border border-blue-100 cursor-pointer" onclick="switchPage('goals')">
+            <p class="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-1">Current Goal</p>
+            <p id="mini-goal-name" class="text-sm font-bold text-slate-800 truncate">No Active Goal</p>
+            <div class="w-full bg-blue-100 h-1.5 rounded-full mt-2">
+                <div id="mini-goal-progress" class="bg-blue-500 h-full rounded-full transition-all duration-700" style="width: 0%"></div>
             </div>
         </div>
     </aside>
 
-    <!-- MAIN CONTENT -->
     <main>
-        <!-- Header -->
-        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <header class="flex justify-between items-center mb-10">
             <div>
-                <h2 id="header-title" class="text-2xl font-bold text-slate-900">Dashboard</h2>
-                <p id="header-subtitle" class="text-sm text-slate-500">Overview of your behavioral spending patterns.</p>
+                <h2 id="header-title" class="text-3xl font-extrabold text-slate-900">Dashboard</h2>
+                <p id="header-subtitle" class="text-slate-500 font-medium">Your personal finance overview.</p>
             </div>
-            <div class="flex items-center gap-3">
-                <div class="glass-card px-4 py-2 text-right">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Net Balance</p>
-                    <p id="global-net" class="text-lg font-bold text-emerald-600">$0.00</p>
-                </div>
+            <div class="glass-card px-6 py-3 text-right">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Monthly Balance</p>
+                <p id="global-net" class="text-xl font-bold text-emerald-500">$0.00</p>
             </div>
         </header>
 
-        <!-- DASHBOARD PAGE -->
         <div id="page-dashboard" class="page active animate-fade-in">
-            <div class="grid grid-cols-12 gap-6">
-                <!-- Main Chart & History -->
-                <div class="col-span-12 lg:col-span-8 space-y-6">
-                    <div class="glass-card p-6">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="font-bold text-slate-800">Financial Insights</h3>
-                            <div class="flex gap-1.5">
-                                <button onclick="setChartView('expense')" id="btn-expense" class="chart-toggle-btn active">Expenses</button>
-                                <button onclick="setChartView('income')" id="btn-income" class="chart-toggle-btn">Income</button>
-                                <button onclick="setChartView('both')" id="btn-both" class="chart-toggle-btn">Flow</button>
+            <div class="grid grid-cols-12 gap-8">
+                <div class="col-span-12 lg:col-span-7">
+                    <div class="glass-card p-8">
+                        <div class="flex justify-between items-center mb-8">
+                            <h3 class="font-bold text-slate-800 text-lg">Cash Flow</h3>
+                            <div class="flex bg-slate-100 p-1 rounded-xl">
+                                <button onclick="setChartView('expense')" id="btn-expense" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-white shadow-sm text-red-600">Spendings</button>
+                                <button onclick="setChartView('income')" id="btn-income" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400">Income</button>
                             </div>
                         </div>
                         
-                        <div class="chart-container">
-                            <canvas id="mainDoughnut"></canvas>
-                            <div id="chart-center-text" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-4">
-                                <p class="text-3xl font-extrabold text-slate-800" id="center-total">$0</p>
-                                <p class="text-[10px] text-slate-400 font-bold uppercase" id="center-label">Outflow</p>
+                        <div class="flex justify-center items-center py-4">
+                            <div class="chart-wrapper">
+                                <canvas id="mainDoughnut"></canvas>
+                                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                    <p class="text-4xl font-extrabold text-slate-800" id="center-total">$0</p>
+                                    <p class="text-[11px] text-slate-400 font-bold uppercase tracking-widest" id="center-label">Spent</p>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="mt-8">
-                            <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Recent Cash Flow Activity</h4>
-                            <div id="cashflow-sheet" class="max-h-60 overflow-y-auto custom-scroll space-y-2 pr-2">
-                                <!-- Populated by JS -->
+                        <div class="mt-10 pt-6 border-t border-slate-50">
+                            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Live Activity</h4>
+                            <div id="cashflow-sheet" class="space-y-3 max-h-48 overflow-y-auto custom-scroll pr-2">
+                                <p class="text-center text-slate-400 text-sm py-4">No entries yet.</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Budget & Stats Sidebar -->
-                <div class="col-span-12 lg:col-span-4 space-y-6">
-                    <div class="glass-card p-6">
-                        <h3 class="font-bold text-slate-800 mb-4">Budget Progress</h3>
-                        <div class="flex justify-between text-[11px] font-bold mb-2">
-                            <span id="budget-spent-text" class="text-slate-600">$0.00 spent</span>
-                            <span id="budget-limit-text" class="text-slate-400">Target $1,500</span>
+                <div class="col-span-12 lg:col-span-5 space-y-8">
+                    <div class="glass-card p-8 border-l-4 border-l-blue-500">
+                        <h3 class="font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <span class="text-blue-500">✦</span> Smart Analysis
+                        </h3>
+                        <div id="ai-quick-tip" class="text-slate-600 leading-relaxed text-sm bg-slate-50 p-4 rounded-xl mb-6 italic">
+                            Enter your income and expenses to get started.
                         </div>
-                        <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden mb-3">
-                            <div id="budget-progress-bar" class="h-full bg-blue-600 rounded-full transition-all duration-1000" style="width: 0%"></div>
-                        </div>
-                        <p id="budget-warning" class="text-[10px] font-bold text-red-500 hidden uppercase tracking-wider">⚠️ Budget limit reached!</p>
+                        <div id="ai-summary-pane" class="space-y-4"></div>
                     </div>
 
-                    <div class="bg-slate-900 rounded-[20px] p-6 text-white">
-                        <p class="text-slate-400 text-[10px] font-bold uppercase mb-2 tracking-widest">Behavioral Nudge</p>
-                        <p id="ai-quick-tip" class="text-sm font-medium leading-relaxed">Your subscription count is higher than 80% of users in your bracket. Consider auditing unused services.</p>
-                    </div>
-
-                    <div class="glass-card p-6">
-                        <h4 class="font-bold text-slate-800 text-sm mb-4">Spending Velocity</h4>
-                        <div class="flex items-end gap-1.5 h-16">
-                            <div class="flex-grow bg-blue-50 h-1/3 rounded-t-md"></div>
-                            <div class="flex-grow bg-blue-100 h-1/2 rounded-t-md"></div>
-                            <div class="flex-grow bg-blue-200 h-2/3 rounded-t-md"></div>
-                            <div class="flex-grow bg-blue-300 h-1/3 rounded-t-md"></div>
-                            <div class="flex-grow bg-blue-400 h-3/4 rounded-t-md"></div>
-                            <div class="flex-grow bg-blue-500 h-full rounded-t-md"></div>
-                            <div class="flex-grow bg-blue-600 h-2/3 rounded-t-md"></div>
+                    <div class="glass-card p-8">
+                        <h3 class="font-bold text-slate-800 text-sm mb-4">Budget Progress</h3>
+                        <div class="flex justify-between items-end mb-2">
+                            <span id="budget-spent-text" class="text-2xl font-bold text-slate-800">$0</span>
+                            <span id="budget-limit-text" class="text-xs font-bold text-slate-400">Limit: $1,500</span>
                         </div>
-                        <p class="text-[10px] text-slate-400 mt-3 text-center uppercase font-bold tracking-widest">Trend: Stable</p>
+                        <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+                            <div id="budget-progress-bar" class="h-full bg-blue-500 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- INCOME PAGE -->
+        <!-- Income Page -->
         <div id="page-income" class="page animate-fade-in">
-            <div class="max-w-3xl glass-card p-8">
+            <div class="max-w-3xl glass-card p-10">
                 <div class="flex justify-between items-center mb-8">
-                    <h3 class="text-xl font-bold text-slate-900">Income Streams</h3>
-                    <button onclick="openModal('income')" class="bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-emerald-100 transition-transform active:scale-95">+ Add Source</button>
+                    <h3 class="text-2xl font-bold text-slate-900">Income Streams</h3>
+                    <button onclick="openModal('income')" class="btn-primary">+ Add Income</button>
                 </div>
-                <div id="income-list" class="space-y-3"></div>
+                <div id="income-list" class="space-y-4"></div>
             </div>
         </div>
 
-        <!-- SUBS PAGE -->
+        <!-- Subs Page -->
         <div id="page-subs" class="page animate-fade-in">
-            <div class="max-w-3xl glass-card p-8">
+            <div class="max-w-3xl glass-card p-10">
                 <div class="flex justify-between items-center mb-8">
-                    <h3 class="text-xl font-bold text-slate-900">Subscription Audit</h3>
-                    <button onclick="openModal('sub')" class="bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg active:scale-95">+ Add Service</button>
+                    <h3 class="text-2xl font-bold text-slate-900">Subscriptions</h3>
+                    <button onclick="openModal('sub')" class="bg-slate-800 text-white px-5 py-2.5 rounded-xl text-sm font-bold">+ Add Service</button>
                 </div>
-                <div id="subs-list" class="space-y-3"></div>
+                <div id="subs-list" class="space-y-4"></div>
             </div>
         </div>
 
-        <!-- GOALS PAGE -->
+        <!-- Goals Page -->
         <div id="page-goals" class="page animate-fade-in">
-            <div class="max-w-3xl glass-card p-8">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-bold text-slate-900">Savings Targets</h3>
-                    <button onclick="openModal('goal')" class="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-blue-100 active:scale-95">+ Add Goal</button>
+            <div class="max-w-3xl glass-card p-10">
+                <div class="flex justify-between items-center mb-8">
+                    <h3 class="text-2xl font-bold text-slate-900">Savings Goals</h3>
+                    <button onclick="openModal('goal')" class="btn-primary">+ Create Goal</button>
                 </div>
-                <div class="bg-blue-50 border border-blue-100 p-4 rounded-xl mb-6">
-                    <p class="text-xs text-blue-700 font-medium">💡 Reorder goals using arrows. The top goal is your <b>Primary Active Goal</b> shown on the dashboard.</p>
-                </div>
-                <div id="goals-list" class="space-y-4"></div>
+                <div id="goals-list" class="space-y-5"></div>
             </div>
         </div>
 
-        <!-- AI CHAT PAGE -->
+        <!-- AI Chat Page -->
         <div id="page-ai" class="page animate-fade-in">
-            <div class="grid grid-cols-12 gap-6">
-                <div class="col-span-12 lg:col-span-8 glass-card flex flex-col h-[70vh] overflow-hidden">
-                    <div id="chat-window" class="flex-grow overflow-y-auto p-6 flex flex-col custom-scroll bg-slate-50/50">
-                        <div class="chat-bubble chat-ai">Analyzing your behavioral data... ready for questions about your budget or goals.</div>
-                    </div>
-                    <div class="p-4 bg-white border-t border-slate-100 flex gap-3">
-                        <input type="text" id="chat-input" placeholder="Ask about your budget or goals..." class="flex-grow p-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                        <button onclick="sendMsg()" class="bg-blue-600 text-white px-6 rounded-xl font-bold shadow-lg shadow-blue-100">Send</button>
-                    </div>
+            <div class="max-w-4xl mx-auto h-[75vh] glass-card flex flex-col overflow-hidden">
+                <div id="chat-window" class="flex-grow overflow-y-auto p-8 flex flex-col custom-scroll bg-slate-50/30">
+                    <div class="chat-bubble chat-ai">Hi! I'm your financial assistant. Once you add some data, I can help you analyze your spending habits and reach your goals.</div>
                 </div>
-                <div class="col-span-12 lg:col-span-4">
-                    <div class="glass-card p-6 bg-slate-900 text-white">
-                        <h4 class="font-bold text-sm mb-4 border-b border-slate-700 pb-2">Behavioral Status</h4>
-                        <div id="ai-summary-pane" class="text-xs space-y-4">
-                            <!-- Updates via JS -->
-                        </div>
-                    </div>
+                <div class="p-6 bg-white border-t border-slate-100 flex gap-4">
+                    <input type="text" id="chat-input" placeholder="Ask a question about your money..." class="flex-grow p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-500">
+                    <button onclick="sendMsg()" class="btn-primary px-8">Send</button>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- UNIFIED MODAL -->
+    <!-- Modal -->
     <div id="modal-overlay" class="hidden fixed inset-0 bg-slate-900/40 z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
-        <div id="modal-content" class="w-full max-w-sm bg-white rounded-3xl p-8 shadow-2xl animate-fade-in">
-            <h3 id="modal-title" class="text-xl font-bold mb-6 text-slate-800">Add Entry</h3>
-            <div id="modal-fields" class="space-y-4"></div>
-            <div class="flex flex-col gap-2 mt-8">
-                <button onclick="saveData()" class="w-full bg-blue-600 text-white p-3.5 rounded-xl font-bold shadow-lg active:scale-95">Confirm</button>
-                <button onclick="closeModal()" class="w-full text-slate-400 font-bold p-2 text-xs hover:text-slate-600">Cancel</button>
+        <div class="w-full max-w-sm bg-white rounded-[32px] p-10 shadow-2xl animate-fade-in">
+            <h3 id="modal-title" class="text-2xl font-bold mb-8 text-slate-900">Add Entry</h3>
+            <div id="modal-fields" class="space-y-5"></div>
+            <div class="flex flex-col gap-3 mt-10">
+                <button onclick="saveData()" class="w-full btn-primary py-4">Save Entry</button>
+                <button onclick="closeModal()" class="w-full text-slate-400 font-bold text-sm">Cancel</button>
             </div>
         </div>
     </div>
 
     <script>
-        // APP STATE
+        const apiKey = ""; 
+
+        // Initial State - Set to empty as requested
         let state = {
             budgetLimit: 1500,
             chartView: 'expense',
-            income: [
-                { id: 1, name: 'Allowance', amount: 350, color: '#10b981' },
-                { id: 2, name: 'Freelance Design', amount: 1200, color: '#059669' }
-            ],
-            expenses: [
-                { id: 101, name: 'Housing', amount: 500, color: '#334155' },
-                { id: 102, name: 'Food & Dining', amount: 250, color: '#f59e0b' },
-                { id: 103, name: 'Transport', amount: 100, color: '#3b82f6' },
-                { id: 104, name: 'Subscriptions', amount: 0, color: '#ef4444' } 
-            ],
-            subs: [
-                { id: 201, name: 'Netflix Premium', amount: 19.99 },
-                { id: 202, name: 'Spotify Duo', amount: 14.99 },
-                { id: 203, name: 'Adobe CC', amount: 32.99 }
-            ],
-            goals: [
-                { id: 301, name: 'Japan Travel Fund', target: 5000, saved: 1200 },
-                { id: 302, name: 'Gaming PC Build', target: 2200, saved: 450 },
-                { id: 303, name: 'Emergency Fund', target: 3000, saved: 200 }
-            ],
-            activeModalType: null,
+            income: [],
+            expenses: [],
+            subs: [],
+            goals: [],
+            history: [],
             chart: null
         };
 
-        // NAVIGATION
-        function switchPage(id) {
+        // Navigation
+        window.switchPage = (id) => {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById('page-' + id).classList.add('active');
             document.getElementById('nav-' + id).classList.add('active');
-            
-            const titles = { dashboard: 'Overview', income: 'Earnings', subs: 'Subscription Audit', goals: 'Life Goals', ai: 'Why AI?' };
-            document.getElementById('header-title').innerText = titles[id];
-            
             syncUI();
-        }
+        };
 
-        // UI SYNC
+        window.setChartView = (view) => {
+            state.chartView = view;
+            const btnEx = document.getElementById('btn-expense');
+            const btnIn = document.getElementById('btn-income');
+            if(view === 'expense') {
+                btnEx.className = 'px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-white shadow-sm text-red-600';
+                btnIn.className = 'px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400';
+            } else {
+                btnEx.className = 'px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400';
+                btnIn.className = 'px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-white shadow-sm text-emerald-600';
+            }
+            syncUI();
+        };
+
         function syncUI() {
-            // Recalculate Subscriptions
-            const subTotal = state.subs.reduce((acc, s) => acc + s.amount, 0);
-            const subCat = state.expenses.find(e => e.name === 'Subscriptions');
-            if(subCat) subCat.amount = subTotal;
-
-            const totalIn = state.income.reduce((acc, i) => acc + i.amount, 0);
-            const totalOut = state.expenses.reduce((acc, e) => acc + e.amount, 0);
+            const totalIn = state.income.reduce((a, b) => a + b.amount, 0);
+            const totalOut = state.expenses.reduce((a, b) => a + b.amount, 0) + state.subs.reduce((a, b) => a + b.amount, 0);
             const net = totalIn - totalOut;
 
-            // Global Net Balance
-            const netEl = document.getElementById('global-net');
-            netEl.innerText = `$${net.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-            netEl.className = `text-lg font-bold ${net < 0 ? 'text-red-500' : 'text-emerald-600'}`;
+            document.getElementById('global-net').innerText = `$${net.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('global-net').className = `text-xl font-bold ${net < 0 ? 'text-red-500' : 'text-emerald-500'}`;
 
-            // Budget Widget
-            const budgetPerc = (totalOut / state.budgetLimit) * 100;
-            document.getElementById('budget-progress-bar').style.width = Math.min(budgetPerc, 100) + '%';
-            document.getElementById('budget-spent-text').innerText = `$${totalOut.toLocaleString()} spent`;
-            document.getElementById('budget-warning').classList.toggle('hidden', budgetPerc <= 100);
-
-            // Sidebar Goal Sync (Rank 1)
-            if(state.goals.length > 0) {
-                const g = state.goals[0];
-                document.getElementById('mini-goal-name').innerText = g.name;
-                document.getElementById('mini-goal-progress').style.width = Math.min((g.saved / g.target * 100), 100) + '%';
+            const topGoal = state.goals[0];
+            if(topGoal) {
+                document.getElementById('mini-goal-name').innerText = topGoal.name;
+                document.getElementById('mini-goal-progress').style.width = Math.min((topGoal.saved/topGoal.target)*100, 100) + '%';
             } else {
-                document.getElementById('mini-goal-name').innerText = "None Set";
+                document.getElementById('mini-goal-name').innerText = "No active goal";
                 document.getElementById('mini-goal-progress').style.width = '0%';
             }
 
+            document.getElementById('budget-spent-text').innerText = `$${totalOut.toLocaleString()}`;
+            document.getElementById('budget-progress-bar').style.width = Math.min((totalOut/state.budgetLimit)*100, 100) + '%';
+            document.getElementById('budget-progress-bar').style.backgroundColor = (totalOut/state.budgetLimit) > 0.9 ? '#ef4444' : '#3b82f6';
+
             renderLists();
             renderChart(totalIn, totalOut);
-            renderCashFlowSheet();
-            updateAISummary(totalIn, totalOut, net);
+            updateSummary(totalIn, totalOut, net);
+            renderActivity();
         }
 
-        // RENDERERS
-        function renderLists() {
-            // Income
-            document.getElementById('income-list').innerHTML = state.income.map(i => `
-                <div class="flex items-center justify-between p-4 bg-slate-50/50 rounded-xl border border-slate-100">
-                    <div class="flex items-center gap-3">
-                        <div class="w-1.5 h-6 rounded-full" style="background:${i.color}"></div>
-                        <p class="font-bold text-slate-700">${i.name}</p>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <span class="font-bold text-emerald-600">+$${i.amount.toFixed(2)}</span>
-                        <button onclick="removeItem('income', ${i.id})" class="text-slate-300 hover:text-red-500 transition-colors">✕</button>
-                    </div>
-                </div>
-            `).join('');
+        async function sendMsg() {
+            const input = document.getElementById('chat-input');
+            const userMsg = input.value.trim();
+            if(!userMsg) return;
 
-            // Subs
-            document.getElementById('subs-list').innerHTML = state.subs.map(s => `
-                <div class="flex items-center justify-between p-4 bg-slate-50/50 rounded-xl border border-slate-100">
-                    <p class="font-bold text-slate-700">${s.name}</p>
-                    <div class="flex items-center gap-4">
-                        <span class="font-bold text-slate-400">-$${s.amount.toFixed(2)}</span>
-                        <button onclick="removeItem('sub', ${s.id})" class="text-slate-200 hover:text-red-500 transition-colors">✕</button>
-                    </div>
-                </div>
-            `).join('');
+            const win = document.getElementById('chat-window');
+            win.innerHTML += `<div class="chat-bubble chat-user animate-fade-in">${userMsg}</div>`;
+            input.value = '';
+            win.scrollTop = win.scrollHeight;
 
-            // Goals (Prioritized)
-            document.getElementById('goals-list').innerHTML = state.goals.map((g, index) => `
-                <div class="p-5 bg-white rounded-2xl border ${index === 0 ? 'border-blue-500 ring-4 ring-blue-50' : 'border-slate-100'} flex gap-4 items-center">
-                    <div class="flex flex-col items-center gap-1">
-                        <button onclick="moveGoal(${index}, -1)" class="p-1 hover:bg-slate-100 rounded text-slate-400 transition-colors ${index === 0 ? 'opacity-20 cursor-default' : ''}">▲</button>
-                        <span class="text-[10px] font-bold text-slate-400">${index + 1}</span>
-                        <button onclick="moveGoal(${index}, 1)" class="p-1 hover:bg-slate-100 rounded text-slate-400 transition-colors ${index === state.goals.length - 1 ? 'opacity-20 cursor-default' : ''}">▼</button>
-                    </div>
-                    <div class="flex-grow">
-                        <div class="flex justify-between items-center mb-2.5">
-                            <h4 class="font-bold text-slate-800 flex items-center gap-2">
-                                ${g.name}
-                                ${index === 0 ? '<span class="text-[8px] bg-blue-600 text-white px-1.5 py-0.5 rounded tracking-tighter uppercase">Primary</span>' : ''}
-                            </h4>
-                            <div class="flex items-center gap-3">
-                                <span class="text-xs font-bold text-blue-600">$${g.saved.toLocaleString()} / $${g.target.toLocaleString()}</span>
-                                <button onclick="removeItem('goal', ${g.id})" class="text-slate-200 hover:text-red-500 transition-colors">✕</button>
-                            </div>
-                        </div>
-                        <div class="w-full h-1.5 bg-slate-50 rounded-full overflow-hidden">
-                            <div class="bg-blue-600 h-full rounded-full transition-all duration-1000" style="width: ${Math.min((g.saved/g.target*100), 100)}%"></div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
+            const totalIn = state.income.reduce((a, b) => a + b.amount, 0);
+            const totalOut = state.expenses.reduce((a, b) => a + b.amount, 0) + state.subs.reduce((a, b) => a + b.amount, 0);
+            const net = totalIn - totalOut;
 
-        function renderCashFlowSheet() {
-            const sheet = document.getElementById('cashflow-sheet');
-            const items = [
-                ...state.income.map(i => ({...i, category: 'Income'})),
-                ...state.expenses.filter(e => e.name !== 'Subscriptions').map(e => ({...e, category: 'Expense'})),
-                ...state.subs.map(s => ({...s, name: s.name + ' (Sub)', category: 'Expense'}))
-            ];
+            const systemPrompt = `You are a high-intelligence Financial Assistant for a user under 18. Keep responses helpful, safe, and clean.
+            Context:
+            - Income: ${JSON.stringify(state.income)}
+            - Expenses: ${JSON.stringify(state.expenses)}
+            - Subscriptions: ${JSON.stringify(state.subs)}
+            - Goals: ${JSON.stringify(state.goals)}
+            - Balance: $${net}
             
-            sheet.innerHTML = items.map(item => `
-                <div class="flex justify-between items-center p-3.5 bg-slate-50 rounded-xl text-xs border border-transparent hover:border-slate-200 transition-all cursor-default">
-                    <div class="flex gap-3 items-center">
-                        <span class="w-1.5 h-1.5 rounded-full ${item.category === 'Income' ? 'bg-emerald-500' : 'bg-slate-400'}"></span>
-                        <span class="font-semibold text-slate-700">${item.name}</span>
-                        <span class="text-slate-400 text-[9px] uppercase font-bold tracking-tighter">${item.category}</span>
-                    </div>
-                    <span class="font-bold ${item.category === 'Income' ? 'text-emerald-600' : 'text-slate-500'}">
-                        ${item.category === 'Income' ? '+' : '-'}$${item.amount.toFixed(2)}
-                    </span>
-                </div>
-            `).join('');
+            Rules:
+            - Reference their specific data when possible.
+            - Provide healthy financial tips.
+            - Be concise but friendly.`;
+
+            // Prep conversation with history
+            const contents = state.history.map(h => ({
+                role: h.role,
+                parts: [{ text: h.text }]
+            }));
+            contents.push({ role: "user", parts: [{ text: userMsg }] });
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        contents: contents,
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                    })
+                });
+
+                if (!response.ok) throw new Error("API Request Failed");
+
+                const result = await response.json();
+                const reply = result.candidates?.[0]?.content?.parts?.[0]?.text || "I'm having trouble connecting to my brain right now. Please try asking again!";
+                
+                state.history.push({ role: "user", text: userMsg });
+                state.history.push({ role: "model", text: reply });
+                if(state.history.length > 20) state.history = state.history.slice(-20);
+
+                win.innerHTML += `<div class="chat-bubble chat-ai animate-fade-in">${reply}</div>`;
+            } catch (e) {
+                console.error(e);
+                win.innerHTML += `<div class="chat-bubble chat-ai">I'm currently offline, but I can still see your balance is $${net}. Let's chat again in a moment!</div>`;
+            }
+            win.scrollTop = win.scrollHeight;
         }
 
-        function renderChart(income, expense) {
-            const ctx = document.getElementById('mainDoughnut').getContext('2d');
-            if (state.chart) state.chart.destroy();
-
-            let dataSet = [], labels = [], colors = [], centerVal = 0, centerLab = "";
-
-            if (state.chartView === 'expense') {
-                labels = state.expenses.map(e => e.name);
-                dataSet = state.expenses.map(e => e.amount);
-                colors = state.expenses.map(e => e.color);
-                centerVal = expense;
-                centerLab = "Monthly Out";
-            } else if (state.chartView === 'income') {
-                labels = state.income.map(i => i.name);
-                dataSet = state.income.map(i => i.amount);
-                colors = state.income.map(i => i.color);
-                centerVal = income;
-                centerLab = "Monthly In";
+        function renderLists() {
+            const incList = document.getElementById('income-list');
+            if (state.income.length === 0) {
+                incList.innerHTML = `<p class="text-center text-slate-400 py-8">No income added yet.</p>`;
             } else {
-                labels = ['Income', 'Expense'];
-                dataSet = [income, expense];
-                colors = ['#10b981', '#cbd5e1'];
-                centerVal = income - expense;
-                centerLab = "Net Flow";
+                incList.innerHTML = state.income.map(i => `
+                    <div class="flex items-center justify-between p-5 bg-emerald-50/30 rounded-2xl border border-emerald-100/50">
+                        <span class="font-bold text-slate-700">${i.name}</span>
+                        <div class="flex items-center gap-4"><span class="font-bold text-emerald-600">+$${i.amount.toLocaleString()}</span><button onclick="removeItem('income', ${i.id})" class="text-slate-300 hover:text-red-500">✕</button></div>
+                    </div>`).join('');
             }
 
-            document.getElementById('center-total').innerText = `$${Math.abs(centerVal).toFixed(0)}`;
-            document.getElementById('center-label').innerText = centerLab;
+            const subList = document.getElementById('subs-list');
+            if (state.subs.length === 0) {
+                subList.innerHTML = `<p class="text-center text-slate-400 py-8">No subscriptions added yet.</p>`;
+            } else {
+                subList.innerHTML = state.subs.map(s => `
+                    <div class="flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                        <span class="font-bold text-slate-700">${s.name}</span>
+                        <div class="flex items-center gap-4"><span class="font-bold text-red-500">-$${s.amount.toFixed(2)}</span><button onclick="removeItem('sub', ${s.id})" class="text-slate-300 hover:text-red-500">✕</button></div>
+                    </div>`).join('');
+            }
 
+            const goalList = document.getElementById('goals-list');
+            if (state.goals.length === 0) {
+                goalList.innerHTML = `<p class="text-center text-slate-400 py-8">Create a goal to start saving!</p>`;
+            } else {
+                goalList.innerHTML = state.goals.map((g, idx) => `
+                    <div class="p-6 bg-white rounded-3xl border ${idx === 0 ? 'border-blue-500 shadow-lg shadow-blue-50' : 'border-slate-100'}">
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center gap-2">${idx === 0 ? '<span class="w-2 h-2 bg-blue-500 rounded-full"></span>' : ''}<h4 class="font-bold text-slate-800">${g.name}</h4></div>
+                            <button onclick="removeItem('goal', ${g.id})" class="text-slate-200 hover:text-red-500">✕</button>
+                        </div>
+                        <div class="w-full h-2 bg-slate-100 rounded-full mb-3"><div class="bg-blue-500 h-full rounded-full" style="width:${(g.saved/g.target*100)}%"></div></div>
+                        <div class="flex justify-between text-xs font-bold"><span class="text-slate-400">Saved $${g.saved.toLocaleString()}</span><span class="text-blue-500">Goal $${g.target.toLocaleString()}</span></div>
+                    </div>`).join('');
+            }
+        }
+
+        function renderChart(totalIn, totalOut) {
+            const ctx = document.getElementById('mainDoughnut').getContext('2d');
+            if(state.chart) state.chart.destroy();
+            
+            const isExp = state.chartView === 'expense';
+            const labels = isExp ? [...state.expenses.map(e => e.name), ...state.subs.map(s => s.name)] : state.income.map(i => i.name);
+            const data = isExp ? [...state.expenses.map(e => e.amount), ...state.subs.map(s => s.amount)] : state.income.map(i => i.amount);
+            
+            if (data.length === 0) {
+                data.push(1);
+                labels.push("No Data");
+            }
+
+            const expenseColors = ['#ef4444', '#f87171', '#fca5a5', '#fee2e2', '#b91c1c', '#991b1b', '#7f1d1d'];
+            const incomeColors = ['#10b981', '#34d399', '#6ee7b7', '#a7f3d0'];
+            const colors = labels[0] === "No Data" ? ['#f1f5f9'] : (isExp ? expenseColors : incomeColors);
+
+            document.getElementById('center-total').innerText = `$${(isExp ? totalOut : totalIn).toFixed(0)}`;
+            document.getElementById('center-label').innerText = isExp ? "Spent" : "Earned";
+            
             state.chart = new Chart(ctx, {
                 type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: dataSet,
-                        backgroundColor: colors,
-                        borderWidth: 0,
-                        hoverOffset: 12
-                    }]
-                },
-                options: {
-                    maintainAspectRatio: false, // Essential for containment
-                    cutout: '82%',
-                    plugins: { 
-                        legend: { display: false },
-                        tooltip: {
-                            padding: 12,
-                            titleFont: { size: 13, weight: 'bold' },
-                            bodyFont: { size: 12 },
-                            cornerRadius: 10,
-                            backgroundColor: '#1e293b'
-                        }
-                    }
+                data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#fff', hoverOffset: 15 }] },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: true, 
+                    cutout: '78%', 
+                    plugins: { legend: { display: false }, tooltip: { enabled: labels[0] !== "No Data" } } 
                 }
             });
         }
 
-        // ACTIONS
-        function moveGoal(index, dir) {
-            const target = index + dir;
-            if (target < 0 || target >= state.goals.length) return;
-            const temp = state.goals[index];
-            state.goals[index] = state.goals[target];
-            state.goals[target] = temp;
-            syncUI();
-        }
-
-        function setChartView(view) {
-            state.chartView = view;
-            document.querySelectorAll('.chart-toggle-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('btn-' + view).classList.add('active');
-            syncUI();
-        }
-
-        function updateAISummary(income, expense, net) {
-            const pane = document.getElementById('ai-summary-pane');
+        function updateSummary(income, spendings, net) {
             const goal = state.goals[0];
-            pane.innerHTML = `
-                <div class="flex justify-between items-center"><span class="text-slate-400">Total Revenue:</span> <span class="font-bold">$${income.toLocaleString()}</span></div>
-                <div class="flex justify-between items-center"><span class="text-slate-400">Total Expenses:</span> <span class="font-bold">$${expense.toLocaleString()}</span></div>
-                <div class="flex justify-between items-center mt-2 border-t border-slate-800 pt-2"><span class="text-slate-400">Current Velocity:</span> <span class="font-bold ${net < 0 ? 'text-red-400' : 'text-emerald-400'}">$${net.toLocaleString()}</span></div>
-                <div class="mt-6 pt-4 border-t border-slate-800">
-                    <p class="text-[9px] font-bold text-blue-400 uppercase mb-2 tracking-widest">Active Analysis</p>
-                    <p class="text-slate-300">Targeting <b>${goal ? goal.name : 'N/A'}</b>. Projected completion in <b>${net > 0 && goal ? Math.ceil((goal.target - goal.saved)/net) : '∞'}</b> months at current savings rate.</p>
-                </div>
-            `;
-        }
-
-        function openModal(type) {
-            state.activeModalType = type;
-            const titles = { income: 'New Income Source', sub: 'Add Subscription', goal: 'Define Savings Goal' };
-            document.getElementById('modal-title').innerText = titles[type];
-            let fields = `
-                <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Item Name</label>
-                    <input type="text" id="input-name" placeholder="e.g. Salary" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 ring-blue-500">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Amount ($)</label>
-                    <input type="number" id="input-amount" placeholder="0.00" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 ring-blue-500">
-                </div>
-            `;
-            if(type === 'goal') {
-                fields += `
-                <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Existing Savings ($)</label>
-                    <input type="number" id="input-saved" placeholder="Already saved..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-1 ring-blue-500">
+            const progress = goal ? ((goal.saved/goal.target)*100).toFixed(0) : 0;
+            document.getElementById('ai-summary-pane').innerHTML = `
+                <div class="flex justify-between items-center text-sm"><span class="text-slate-400 font-medium">Monthly In:</span> <span class="font-bold text-emerald-600">$${income.toLocaleString()}</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-slate-400 font-medium">Monthly Out:</span> <span class="font-bold text-red-500">$${spendings.toLocaleString()}</span></div>
+                <div class="flex justify-between items-center text-sm pt-4 border-t border-slate-100"><span class="text-slate-400 font-medium">Net Balance:</span> <span class="font-bold text-blue-500">$${net.toLocaleString()}</span></div>
+                <div class="mt-6 bg-blue-50 p-4 rounded-xl border border-blue-100">
+                    <p class="text-[10px] font-bold text-blue-500 uppercase mb-1">Goal Tracker</p>
+                    <p class="text-xs text-slate-700 leading-relaxed">${goal ? `You are <b>${progress}%</b> toward <b>${goal.name}</b>.` : 'No savings goals set yet.'}</p>
                 </div>`;
+        }
+
+        function renderActivity() {
+            const list = [...state.income.map(i => ({...i, type: 'in'})), ...state.expenses.map(e => ({...e, type: 'out'})), ...state.subs.map(s => ({...s, type: 'out'}))];
+            const sheet = document.getElementById('cashflow-sheet');
+            if (list.length === 0) {
+                sheet.innerHTML = `<p class="text-center text-slate-400 text-sm py-4">No entries yet.</p>`;
+                return;
             }
-            document.getElementById('modal-fields').innerHTML = fields;
+            sheet.innerHTML = list.map(item => `
+                <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl text-xs">
+                    <span class="font-semibold text-slate-600">${item.name}</span>
+                    <span class="font-bold ${item.type === 'in' ? 'text-emerald-500' : 'text-red-500'}">${item.type === 'in' ? '+' : '-'}$${item.amount.toLocaleString()}</span>
+                </div>`).join('');
+        }
+
+        window.openModal = (type) => {
+            state.activeType = type;
             document.getElementById('modal-overlay').classList.remove('hidden');
-        }
+            let f = `<div class="space-y-1"><label class="text-xs font-bold text-slate-400 uppercase">Title</label><input id="mod-name" type="text" class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none"></div>
+                     <div class="space-y-1"><label class="text-xs font-bold text-slate-400 uppercase">Amount ($)</label><input id="mod-amt" type="number" class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none"></div>`;
+            if(type === 'goal') f += `<div class="space-y-1"><label class="text-xs font-bold text-slate-400 uppercase">Target Total ($)</label><input id="mod-target" type="number" class="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 outline-none"></div>`;
+            document.getElementById('modal-fields').innerHTML = f;
+        };
 
-        function closeModal() {
-            document.getElementById('modal-overlay').classList.add('hidden');
-        }
+        window.closeModal = () => document.getElementById('modal-overlay').classList.add('hidden');
 
-        function saveData() {
-            const name = document.getElementById('input-name').value;
-            const amount = parseFloat(document.getElementById('input-amount').value);
-            if(!name || isNaN(amount)) return;
-            
-            const id = Date.now();
-            if(state.activeModalType === 'income') {
-                state.income.push({ id, name, amount, color: '#10b981' });
-            } else if(state.activeModalType === 'sub') {
-                state.subs.push({ id, name, amount });
-            } else if(state.activeModalType === 'goal') {
-                const saved = parseFloat(document.getElementById('input-saved').value) || 0;
-                state.goals.push({ id, name, target: amount, saved });
-            }
+        window.saveData = () => {
+            const n = document.getElementById('mod-name').value;
+            const a = parseFloat(document.getElementById('mod-amt').value);
+            if(!n || isNaN(a)) return;
+            if(state.activeType === 'income') state.income.push({id: Date.now(), name: n, amount: a});
+            if(state.activeType === 'sub') state.subs.push({id: Date.now(), name: n, amount: a});
+            if(state.activeType === 'expense' || state.activeType === 'spend') state.expenses.push({id: Date.now(), name: n, amount: a});
+            if(state.activeType === 'goal') state.goals.push({id: Date.now(), name: n, target: parseFloat(document.getElementById('mod-target').value), saved: a});
+            syncUI(); closeModal();
+        };
+
+        window.removeItem = (type, id) => {
+            const key = type === 'income' ? 'income' : (type === 'sub' ? 'subs' : 'goals');
+            state[key] = state[key].filter(x => x.id !== id);
             syncUI();
-            closeModal();
-            confetti({ particleCount: 100, spread: 60, origin: { y: 0.8 }, colors: ['#2563eb', '#10b981'] });
-        }
+        };
 
-        function removeItem(type, id) {
-            if(type === 'income') state.income = state.income.filter(i => i.id !== id);
-            if(type === 'sub') state.subs = state.subs.filter(s => s.id !== id);
-            if(type === 'goal') state.goals = state.goals.filter(g => g.id !== id);
+        window.onload = () => {
             syncUI();
-        }
-
-        function sendMsg() {
-            const input = document.getElementById('chat-input');
-            const win = document.getElementById('chat-window');
-            if(!input.value) return;
-
-            const userMsg = input.value;
-            input.value = '';
-            win.innerHTML += `<div class="chat-bubble chat-user animate-fade-in">${userMsg}</div>`;
-
-            setTimeout(() => {
-                const goal = state.goals[0];
-                const res = goal 
-                    ? `I see you're prioritizing your "${goal.name}". With your current surplus, you can increase your savings by 15% if you cancel just one subscription.`
-                    : "You haven't set an active goal yet. Try adding one and ranking it #1 to see specific advice!";
-                win.innerHTML += `<div class="chat-bubble chat-ai animate-fade-in">${res}</div>`;
-                win.scrollTop = win.scrollHeight;
-            }, 600);
-        }
-
-        window.onload = syncUI;
+            // Handle Enter key in chat
+            document.getElementById('chat-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendMsg();
+            });
+        };
     </script>
 </body>
 </html>

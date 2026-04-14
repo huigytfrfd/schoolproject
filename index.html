@@ -945,7 +945,7 @@ async function callGemini(userMsg) {
   const prompt = `You are WhySpend, a friendly and insightful personal finance AI advisor. You have access to the user's real financial data. Be specific, actionable, and encouraging. Use numbers from their data. Keep responses concise (3-5 sentences max). Use emojis sparingly.\n\n${systemContext}\n\nUser question: ${userMsg}`;
 
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${state.geminiKey}`, {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${state.geminiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
